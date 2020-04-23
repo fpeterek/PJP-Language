@@ -1,0 +1,259 @@
+options {
+    LOOKAHEAD = 1;
+    STATIC = false;
+    DEBUG_PARSER = true;
+}
+
+PARSER_BEGIN(Parser)
+
+// package org.fpeterek.pjp.generated;
+
+public class Parser {
+  public static void main(String[] args) throws ParseException {
+    Parser parser = new Parser(System.in);
+    parser.Start();
+  }
+}
+
+PARSER_END(Parser)
+
+SKIP : /* WHITE SPACE */
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+| "\f"
+}
+
+SPECIAL_TOKEN : /* COMMENTS */
+{
+  <SINGLE_LINE_COMMENT: "//" (~["\n","\r"])* ("\n"|"\r"|"\r\n")>
+| <MULTI_LINE_COMMENT: "/*" (~["*"])* "*" ("*" | (~["*","/"] (~["*"])* "*"))* "/">
+}
+
+TOKEN : {
+  < BOOL: "boolean" >
+| < STRING: "String" >
+| < FLOAT: "float" >
+| < IF: "if" >
+| < ELSE: "else" >
+| < VAR: "var" >
+| < INT: "int" >
+| < WRITE: "write" >
+| < READ: "read" >
+| < FOR: "for" >
+| < TERMINATOR: ";" >
+}
+
+TOKEN : /* LITERALS */
+{
+  < INTEGER_LITERAL:
+        <DECIMAL_LITERAL>
+      | <HEX_LITERAL>
+      | <OCTAL_LITERAL>
+  >
+|
+  < #DECIMAL_LITERAL: ["1"-"9"] (["0"-"9"])* >
+|
+  < #HEX_LITERAL: "0" ["x","X"] (["0"-"9","a"-"f","A"-"F"])+ >
+|
+  < #OCTAL_LITERAL: "0" (["0"-"7"])* >
+|
+  < FLOAT_LITERAL:
+        (["0"-"9"])+ "." (["0"-"9"])* (<EXPONENT>)? (["f","F"])?
+      | "." (["0"-"9"])+ (<EXPONENT>)? (["f","F"])?
+      | (["0"-"9"])+ <EXPONENT> (["f","F"])?
+      | (["0"-"9"])+ (<EXPONENT>)? ["f","F"]
+  >
+|
+  < #EXPONENT: ["e","E"] (["+","-"])? (["0"-"9"])+ >
+|
+  < BOOL_LITERAL: ("true"|"false") >
+|
+  < STRING_LITERAL:
+      "\""
+      (   (~["\"","\\","\n","\r"])
+        | ("\\"
+            ( ["n","t","b","r","f","\\","'","\""]
+            | ["0"-"7"] ( ["0"-"7"] )?
+            | ["0"-"3"] ["0"-"7"] ["0"-"7"]
+            )
+          )
+      )*
+      "\""
+  >
+}
+
+TOKEN : /* OPERATORS */
+{
+  < ASSIGN: "=" >
+| < GT: ">" >
+| < LT: "<" >
+| < BANG: "!" >
+| < HOOK: "?" >
+| < COLON: ":" >
+| < EQ: "==" >
+| < LTE: "<=" >
+| < GTE: ">=" >
+| < NEQ: "!=" >
+| < OR: "||" >
+| < AND: "&&" >
+| < PLUS: "+" >
+| < MINUS: "-" >
+| < STAR: "*" >
+| < SLASH: "/" >
+| < REM: "%" >
+| < PERIOD: "." >
+
+}
+
+TOKEN : {
+  < LEFT_BRACE: "{" >
+| < RIGHT_BRACE: "}" >
+}
+
+TOKEN : {
+  < IDENTIFIER: ["a"-"z", "A"-"Z", "_"] (["a"-"z", "A"-"Z", "0"-"9", "_"])* >
+}
+
+void Start() :
+{}
+{
+    (Statement() )* <EOF>
+}
+
+void Statement() :
+{}
+{
+  <TERMINATOR>
+| <VAR> <IDENTIFIER> ("," <IDENTIFIER>)* ":" (<INT>|<BOOL>|<FLOAT>|<STRING>) <TERMINATOR>
+| <READ> <IDENTIFIER> ("," <IDENTIFIER>)* <TERMINATOR>
+| <WRITE> Expression() ("," Expression())* <TERMINATOR>
+| Expression() <TERMINATOR>
+| ControlFlow()
+}
+
+void ControlFlow() :
+{}
+{
+  If()
+| For()
+}
+
+void For() :
+{}
+{
+  <FOR> "(" [Expression()] <TERMINATOR> Expression() <TERMINATOR> [Expression()] ")" StatementBlock()
+}
+
+void If() :
+{}
+{
+ <IF> BracedExpression() StatementBlock() [ LOOKAHEAD(2) <ELSE> StatementBlock() ]
+}
+
+void StatementBlock() :
+{}
+{
+  Statement()
+| <LEFT_BRACE> (Statement())* <RIGHT_BRACE>
+}
+
+void Expression() :
+{}
+{
+  TernaryOperator()
+}
+
+void BracedExpression() :
+{}
+{
+  "(" TernaryOperator() ")"
+}
+
+void TernaryOperator() :
+{}
+{
+  BinaryOperator() [ <HOOK> BinaryOperator() <COLON> BinaryOperator() ]
+}
+
+void BinaryOperator() :
+{}
+{
+  LOOKAHEAD(<IDENTIFIER> <ASSIGN>) Assignment() | OrExpression()
+}
+
+void Assignment() :
+{}
+{
+  <IDENTIFIER> <ASSIGN> OrExpression()
+}
+
+void OrExpression() :
+{}
+{
+  AndExpression() (<OR> AndExpression())*
+}
+
+void AndExpression() :
+{}
+{
+  Comparison() (<AND> Comparison())*
+}
+
+void Comparison() :
+{}
+{
+  Addition() ((<GT>|<GTE>|<LT>|<LTE>|<EQ>|<NEQ>) Addition())*
+}
+
+void Addition() :
+{}
+{
+  Multiplication() ((<PLUS>|<MINUS>|<PERIOD>) Multiplication())*
+}
+
+void Multiplication() :
+{}
+{
+  UnaryOperator() ((<STAR>|<REM>|<SLASH>) UnaryOperator())*
+}
+
+void UnaryOperator() :
+{}
+{
+  (<MINUS>|<BANG>) Value()
+| Value()
+}
+
+void Value() :
+{}
+{
+  <IDENTIFIER> | Literal() | BracedExpression()
+}
+
+void Literal() :
+{}
+{
+  <STRING_LITERAL> | <FLOAT_LITERAL> | <INTEGER_LITERAL> | <BOOL_LITERAL>
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
