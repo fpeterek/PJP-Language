@@ -2,6 +2,8 @@ options {
     LOOKAHEAD = 1;
     STATIC = false;
     DEBUG_PARSER = true;
+    NODE_DEFAULT_VOID = true;
+    MULTI = true;
 }
 
 PARSER_BEGIN(Parser)
@@ -11,7 +13,7 @@ PARSER_BEGIN(Parser)
 public class Parser {
   public static void main(String[] args) throws ParseException {
     Parser parser = new Parser(System.in);
-    parser.Start();
+    parser.Start().dump("");
   }
 }
 
@@ -117,10 +119,11 @@ TOKEN : {
   < IDENTIFIER: ["a"-"z", "A"-"Z", "_"] (["a"-"z", "A"-"Z", "0"-"9", "_"])* >
 }
 
-void Start() :
+ASTStart Start() #Start :
 {}
 {
     (Statement() )* <EOF>
+    { return jjtThis; }
 }
 
 void Statement() :
@@ -141,13 +144,13 @@ void ControlFlow() :
 | For()
 }
 
-void For() :
+void For() #For :
 {}
 {
   <FOR> "(" [Expression()] <TERMINATOR> Expression() <TERMINATOR> [Expression()] ")" StatementBlock()
 }
 
-void If() :
+void If() #If :
 {}
 {
  <IF> BracedExpression() StatementBlock() [ LOOKAHEAD(2) <ELSE> StatementBlock() ]
@@ -157,7 +160,7 @@ void StatementBlock() :
 {}
 {
   Statement()
-| <LEFT_BRACE> (Statement())* <RIGHT_BRACE>
+| ( <LEFT_BRACE> (Statement())* <RIGHT_BRACE> ) #Block
 }
 
 void Expression() :
@@ -175,7 +178,7 @@ void BracedExpression() :
 void TernaryOperator() :
 {}
 {
-  BinaryOperator() [ <HOOK> BinaryOperator() <COLON> BinaryOperator() ]
+  ( BinaryOperator() [ <HOOK> BinaryOperator() <COLON> BinaryOperator() ] ) #Ternary(>1)
 }
 
 void BinaryOperator() :
@@ -184,7 +187,7 @@ void BinaryOperator() :
   LOOKAHEAD(<IDENTIFIER> <ASSIGN>) Assignment() | OrExpression()
 }
 
-void Assignment() :
+void Assignment() #Assignment :
 {}
 {
   <IDENTIFIER> <ASSIGN> OrExpression()
@@ -193,50 +196,73 @@ void Assignment() :
 void OrExpression() :
 {}
 {
-  AndExpression() (<OR> AndExpression())*
+  ( AndExpression() (<OR> AndExpression())* ) #Or(>1)
 }
 
 void AndExpression() :
 {}
 {
-  Comparison() (<AND> Comparison())*
+  ( Comparison() (<AND> Comparison())* ) #And(>1)
 }
 
 void Comparison() :
-{}
 {
-  Addition() ((<GT>|<GTE>|<LT>|<LTE>|<EQ>|<NEQ>) Addition())*
+  Token t;
+}
+{
+  (
+    Addition()
+    [
+      (
+         t=<GT>   {jjtThis.value = t.image;}
+        |t=<GTE>  {jjtThis.value = t.image;}
+        |t=<LT>   {jjtThis.value = t.image;}
+        |t=<LTE>  {jjtThis.value = t.image;}
+        |t=<EQ>   {jjtThis.value = t.image;}
+        |t=<NEQ>  {jjtThis.value = t.image;}
+      )
+      Addition()
+    ]
+  ) #Cmp(>1)
 }
 
 void Addition() :
 {}
 {
-  Multiplication() ((<PLUS>|<MINUS>|<PERIOD>) Multiplication())*
+  ( Multiplication() ((<PLUS> #Plus |<MINUS> #Minus |<PERIOD> #Cat) Multiplication())* ) #Add(>1)
 }
 
 void Multiplication() :
 {}
 {
-  UnaryOperator() ((<STAR>|<REM>|<SLASH>) UnaryOperator())*
+  ( UnaryOperator() ((<STAR> #Mult |<REM> #Mod |<SLASH> #Div) UnaryOperator())* ) #Mult(>1)
 }
 
 void UnaryOperator() :
 {}
 {
-  (<MINUS>|<BANG>) Value()
-| Value()
+  ((<MINUS> #Minus|<BANG> #Neg) Value()) #UnaryOp | Value()
 }
 
 void Value() :
-{}
 {
-  <IDENTIFIER> | Literal() | BracedExpression()
+  Token t;
+}
+{
+  t=<IDENTIFIER> {jjtThis.value = t.image;} #Identifier
+| Literal()
+| BracedExpression()
 }
 
-void Literal() :
-{}
+void Literal()  :
 {
-  <STRING_LITERAL> | <FLOAT_LITERAL> | <INTEGER_LITERAL> | <BOOL_LITERAL>
+  Token t;
+}
+{
+  t=<STRING_LITERAL>  {jjtThis.value = t.image;} #StringLiteral
+| t=<FLOAT_LITERAL>   {jjtThis.value = t.image;} #FloatLiteral
+| t=<INTEGER_LITERAL> {jjtThis.value = t.image;} #IntLiteral
+| t=<BOOL_LITERAL>    {jjtThis.value = t.image;} #BoolLiteral
 }
 
 
