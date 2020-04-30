@@ -229,13 +229,13 @@ void Comparison() :
 void Addition() :
 {}
 {
-  ( Multiplication() ((<PLUS> #Plus |<MINUS> #Minus |<PERIOD> #Cat) Multiplication())* ) #Add(>1)
+  ( Multiplication() ( LOOKAHEAD(2) (<PLUS> #Plus |<MINUS> #Minus |<PERIOD> #Cat) Addition())* ) #Add(>1)
 }
 
 void Multiplication() :
 {}
 {
-  ( UnaryOperator() ((<STAR> #Mult |<REM> #Mod |<SLASH> #Div) UnaryOperator())* ) #Mult(>1)
+  ( UnaryOperator() ( LOOKAHEAD(2) (<STAR> #Mult |<REM> #Mod |<SLASH> #Div) Multiplication() )* ) #Mult(>1)
 }
 
 void UnaryOperator() :
@@ -264,22 +264,3 @@ void Literal()  :
 | t=<INTEGER_LITERAL> {jjtThis.value = t.image;} #IntLiteral
 | t=<BOOL_LITERAL>    {jjtThis.value = t.image;} #BoolLiteral
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
