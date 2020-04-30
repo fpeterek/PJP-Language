@@ -1,14 +1,14 @@
 options {
     LOOKAHEAD = 1;
     STATIC = false;
-    DEBUG_PARSER = true;
+    // DEBUG_PARSER = true;
     NODE_DEFAULT_VOID = true;
     MULTI = true;
 }
 
 PARSER_BEGIN(Parser)
 
-// package org.fpeterek.pjp.generated;
+package org.fpeterek.pjp.generated;
 
 public class Parser {
   public static void main(String[] args) throws ParseException {
@@ -130,9 +130,9 @@ void Statement() :
 {}
 {
   <TERMINATOR>
-| <VAR> <IDENTIFIER> ("," <IDENTIFIER>)* ":" (<INT>|<BOOL>|<FLOAT>|<STRING>) <TERMINATOR>
-| <READ> <IDENTIFIER> ("," <IDENTIFIER>)* <TERMINATOR>
-| <WRITE> Expression() ("," Expression())* <TERMINATOR>
+| ( <VAR> <IDENTIFIER> ("," <IDENTIFIER>)* ":" (<INT>|<BOOL>|<FLOAT>|<STRING>) <TERMINATOR> ) #Var
+| ( <READ> <IDENTIFIER> ("," <IDENTIFIER>)* <TERMINATOR> ) #Read
+| ( <WRITE> Expression() ("," Expression())* <TERMINATOR> ) #Write
 | Expression() <TERMINATOR>
 | ControlFlow()
 }
