@@ -1,5 +1,6 @@
 package org.fpeterek.pjp
 
+import org.fpeterek.pjp.ast.AstBuilder
 import org.fpeterek.pjp.generated.Parser
 
 fun main() {
@@ -7,9 +8,9 @@ fun main() {
     val parser = Parser(System.`in`)
     val tree = parser.Start()
 
-    (0 until tree.jjtGetNumChildren()).forEach {
-        val child = tree.jjtGetChild(it)
-        println(child)
-    }
+    tree.dump("")
+
+    val builder = AstBuilder()
+    val ast = builder.build(tree)
 
 }

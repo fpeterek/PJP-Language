@@ -196,13 +196,13 @@ void Assignment() #Assignment :
 void OrExpression() :
 {}
 {
-  ( AndExpression() (<OR> AndExpression())* ) #Or(>1)
+  ( AndExpression() [<OR> OrExpression()] ) #Or(>1)
 }
 
 void AndExpression() :
 {}
 {
-  ( Comparison() (<AND> Comparison())* ) #And(>1)
+  ( Comparison() [<AND> AndExpression()] ) #And(>1)
 }
 
 void Comparison() :
@@ -227,21 +227,51 @@ void Comparison() :
 }
 
 void Addition() :
-{}
 {
-  ( Multiplication() ( LOOKAHEAD(2) (<PLUS> #Plus |<MINUS> #Minus |<PERIOD> #Cat) Addition())* ) #Add(>1)
+  Token t;
+}
+{
+  (
+    Multiplication()
+    [
+      (
+         t=<PLUS>   {jjtThis.value = t.image;}
+        |t=<MINUS>  {jjtThis.value = t.image;}
+        |t=<PERIOD> {jjtThis.value = t.image;}
+      ) Addition()
+    ]
+  ) #Add(>1)
 }
 
 void Multiplication() :
-{}
 {
-  ( UnaryOperator() ( LOOKAHEAD(2) (<STAR> #Mult |<REM> #Mod |<SLASH> #Div) Multiplication() )* ) #Mult(>1)
+  Token t;
+}
+{
+  (
+    UnaryOperator()
+    [
+      (
+         t=<STAR>  {jjtThis.value = t.image;}
+        |t=<REM>   {jjtThis.value = t.image;}
+        |t=<SLASH> {jjtThis.value = t.image;}
+      ) Multiplication()
+    ]
+  ) #Mult(>1)
 }
 
 void UnaryOperator() :
-{}
 {
-  ((<MINUS> #Minus|<BANG> #Neg) Value()) #UnaryOp | Value()
+  Token t;
+}
+{
+  (
+    (
+       t=<MINUS> {jjtThis.value = t.image;}
+      |t=<BANG>  {jjtThis.value = t.image;}
+    ) UnaryOperator()
+  ) #UnaryOp
+  | Value()
 }
 
 void Value() :
