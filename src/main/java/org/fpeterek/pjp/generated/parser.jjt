@@ -130,11 +130,26 @@ void Statement() :
 {}
 {
   <TERMINATOR>
-| ( <VAR> <IDENTIFIER> ("," <IDENTIFIER>)* ":" (<INT>|<BOOL>|<FLOAT>|<STRING>) <TERMINATOR> ) #Var
-| ( <READ> <IDENTIFIER> ("," <IDENTIFIER>)* <TERMINATOR> ) #Read
+| Var()
+| ( <READ> Identifier() ("," Identifier())* <TERMINATOR> ) #Read
 | ( <WRITE> Expression() ("," Expression())* <TERMINATOR> ) #Write
 | Expression() <TERMINATOR>
 | ControlFlow()
+}
+
+void Var() #Var :
+{
+  Token t;
+}
+{
+   <VAR> Identifier() ("," Identifier())* ":"
+   (
+      t=<INT>    {jjtThis.value = t.image;}
+     |t=<BOOL>   {jjtThis.value = t.image;}
+     |t=<FLOAT>  {jjtThis.value = t.image;}
+     |t=<STRING> {jjtThis.value = t.image;}
+   )
+   <TERMINATOR>
 }
 
 void ControlFlow() :
@@ -147,7 +162,7 @@ void ControlFlow() :
 void For() #For :
 {}
 {
-  <FOR> "(" [Expression()] <TERMINATOR> Expression() <TERMINATOR> [Expression()] ")" StatementBlock()
+  <FOR> "(" Expression() <TERMINATOR> Expression() <TERMINATOR> Expression() ")" StatementBlock()
 }
 
 void If() #If :
@@ -188,9 +203,13 @@ void BinaryOperator() :
 }
 
 void Assignment() #Assignment :
-{}
 {
-  <IDENTIFIER> <ASSIGN> OrExpression()
+Token t;
+}
+{
+  Identifier()
+  t=<ASSIGN> {jjtThis.value = t.image;}
+  OrExpression()
 }
 
 void OrExpression() :
@@ -279,9 +298,17 @@ void Value() :
   Token t;
 }
 {
-  t=<IDENTIFIER> {jjtThis.value = t.image;} #Identifier
+  Identifier()
 | Literal()
 | BracedExpression()
+}
+
+void Identifier() #Identifier :
+{
+  Token t;
+}
+{
+    t=<IDENTIFIER> {jjtThis.value = t.image;}
 }
 
 void Literal()  :

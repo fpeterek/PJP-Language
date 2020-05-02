@@ -2,11 +2,12 @@ package org.fpeterek.pjp.ast.nodes
 
 import org.fpeterek.pjp.ast.DataType
 import org.fpeterek.pjp.ast.NodeType
+import java.lang.Exception
 
-class Block(parent: AstNode?) : AstNode(NodeType.Block, DataType.Unit, parent) {
+class Block(parent: Block?) : AstNode(NodeType.Block, DataType.Unit, parent) {
 
     private val subnodes = mutableListOf<AstNode>()
-    private val scopeVariables = mutableListOf<Pair<String, DataType>>()
+    private val scopeVariables = mutableMapOf<String, DataType>()
 
     val nodes: List<AstNode>
         get() = subnodes
@@ -15,9 +16,15 @@ class Block(parent: AstNode?) : AstNode(NodeType.Block, DataType.Unit, parent) {
     fun addNode(node: AstNode) {
         if (node.nodeType == NodeType.Var) {
             node as Var
-            scopeVariables.add(node.name to node.dataType)
+            if (getVarType(node.name) != null) {
+                throw Exception("Redefinition of variable '${node.name}'")
+            }
+            scopeVariables[node.name] = node.dataType
         }
         subnodes.add(node)
     }
+
+    fun getVarType(id: String): DataType? =
+        scopeVariables.getOrDefault(id, null) ?: parent?.getVarType(id)
 
 }
