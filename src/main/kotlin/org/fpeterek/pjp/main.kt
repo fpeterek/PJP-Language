@@ -5,10 +5,10 @@ import org.fpeterek.pjp.generated.Parser
 
 fun main() {
 
+    println("Input:")
+
     val parser = Parser(System.`in`)
     val tree = parser.Start()
-
-    // tree.dump("")
 
     val builder = AstBuilder()
     val ast = builder.build(tree)
