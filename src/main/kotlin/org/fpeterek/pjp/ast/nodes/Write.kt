@@ -14,4 +14,6 @@ class Write(parent: Block, val args: List<AstNode>)
         }
     }
 
+    override fun toString() = "write ${args.joinToString(", ")}"
+
 }

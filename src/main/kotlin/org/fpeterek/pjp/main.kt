@@ -8,9 +8,13 @@ fun main() {
     val parser = Parser(System.`in`)
     val tree = parser.Start()
 
-    tree.dump("")
+    // tree.dump("")
 
     val builder = AstBuilder()
     val ast = builder.build(tree)
+
+    println("Printing AST...")
+
+    println(ast.toString(0))
 
 }

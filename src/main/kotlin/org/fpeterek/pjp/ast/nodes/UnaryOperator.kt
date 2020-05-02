@@ -5,4 +5,8 @@ import org.fpeterek.pjp.ast.NodeType
 
 class UnaryOperator(parent: Block, type: DataType, nodeType: NodeType,
                     val operator: String, val expr: Expression)
-    : Expression(parent, type, nodeType)
+    : Expression(parent, type, nodeType) {
+
+    override fun toString() = "$operator($expr)"
+
+}
