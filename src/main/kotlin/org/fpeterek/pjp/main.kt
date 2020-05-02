@@ -20,7 +20,7 @@ fun main() {
         println(ast.toString(0))
 
     } catch (e: Exception) {
-        print(e.message)
+        println(e.message)
     }
 
 }
