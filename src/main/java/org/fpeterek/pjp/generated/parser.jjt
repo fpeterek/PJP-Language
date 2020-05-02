@@ -213,15 +213,31 @@ Token t;
 }
 
 void OrExpression() :
-{}
 {
-  ( AndExpression() [<OR> OrExpression()] ) #Or(>1)
+  Token t;
+}
+{
+  (
+    AndExpression()
+    [
+      t=<OR> {jjtThis.value = t.image;}
+      OrExpression()
+    ]
+  ) #Or(>1)
 }
 
 void AndExpression() :
-{}
 {
-  ( Comparison() [<AND> AndExpression()] ) #And(>1)
+  Token t;
+}
+{
+  (
+    Comparison()
+    [
+      t=<AND> {jjtThis.value = t.image;}
+      AndExpression()
+    ]
+  ) #And(>1)
 }
 
 void Comparison() :

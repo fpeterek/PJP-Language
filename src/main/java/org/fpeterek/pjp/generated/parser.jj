@@ -460,7 +460,9 @@ Token t;
 }
 
 void OrExpression() :
-{}
+{
+  Token t;
+}
 {/*@bgen(jjtree) #Or(> 1) */
   {
     ASTOr jjtn001 = new ASTOr(JJTOR);
@@ -469,7 +471,13 @@ void OrExpression() :
   }
   try {
 /*@egen*/
-  ( AndExpression() [<OR> OrExpression()] )/*@bgen(jjtree)*/
+  (
+    AndExpression()
+    [
+      t=<OR> {jjtn001.value = t.image;}
+      OrExpression()
+    ]
+  )/*@bgen(jjtree)*/
   } catch (Throwable jjte001) {
     if (jjtc001) {
       jjtree.clearNodeScope(jjtn001);
@@ -493,7 +501,9 @@ void OrExpression() :
 }
 
 void AndExpression() :
-{}
+{
+  Token t;
+}
 {/*@bgen(jjtree) #And(> 1) */
   {
     ASTAnd jjtn001 = new ASTAnd(JJTAND);
@@ -502,7 +512,13 @@ void AndExpression() :
   }
   try {
 /*@egen*/
-  ( Comparison() [<AND> AndExpression()] )/*@bgen(jjtree)*/
+  (
+    Comparison()
+    [
+      t=<AND> {jjtn001.value = t.image;}
+      AndExpression()
+    ]
+  )/*@bgen(jjtree)*/
   } catch (Throwable jjte001) {
     if (jjtc001) {
       jjtree.clearNodeScope(jjtn001);
