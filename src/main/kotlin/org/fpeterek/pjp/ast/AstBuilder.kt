@@ -1,5 +1,6 @@
 package org.fpeterek.pjp.ast
 
+import org.fpeterek.pjp.ErrorReporter
 import org.fpeterek.pjp.TypeChecker
 import org.fpeterek.pjp.ast.nodes.*
 import org.fpeterek.pjp.generated.*
@@ -7,7 +8,7 @@ import java.lang.Exception
 
 class AstBuilder {
 
-    private val root = Block(null)
+    private val root = Block(null, 1, 1)
     private var current = root
 
     private fun enterScope(new: Block) {
@@ -25,33 +26,47 @@ class AstBuilder {
             else -> TypeChecker::operatorType
         }
 
+    private fun error(msg: String, row: Int, col: Int): Error {
+        ErrorReporter.report("$msg (row: $row, column: $col)")
+        return Error(current, row, col)
+    }
+
     private fun binaryOperator(node: SimpleNode): BinaryOperator {
 
-        val left = parseNode(node.jjtGetChild(0)) as? Expression
-            ?: throw Exception("Expression expected")
-        val right = parseNode(node.jjtGetChild(1)) as? Expression
-            ?: throw Exception("Expression expected")
+        val lChild = node.jjtGetChild(0) as SimpleNode
+        val rChild = node.jjtGetChild(1) as SimpleNode
+
+        val left = parseNode(lChild) as? Expression
+            ?: error("Expression expected", lChild.line, lChild.column)
+        val right = parseNode(rChild) as? Expression
+            ?: error("Expression expected", lChild.line, lChild.column)
         val op = node.jjtGetValue() as String
 
         val typeCheck = operatorTypeCheck(node)
 
         return BinaryOperator(current, typeCheck(left.dataType, right.dataType),
-            NodeType.Expression, op, left, right)
+            NodeType.Expression, op, left, right, node.line, node.column)
     }
 
     private fun ternaryOperator(node: SimpleNode): TernaryOperator {
-        val cond = parseNode(node.jjtGetChild(0)) as? Expression
-            ?: throw Exception("Expression expected")
-        val ifTrue = parseNode(node.jjtGetChild(1)) as? Expression
-            ?: throw Exception("Expression expected")
-        val ifFalse = parseNode(node.jjtGetChild(2)) as? Expression
-            ?: throw Exception("Expression expected")
+
+        val cChild = node.jjtGetChild(0) as SimpleNode
+        val tChild = node.jjtGetChild(1) as SimpleNode
+        val fChild = node.jjtGetChild(2) as SimpleNode
+
+        val cond = parseNode(cChild) as? Expression
+            ?: throw Exception("Expression expected, row: ${cChild.line}, column: ${cChild.column}")
+        val ifTrue = parseNode(tChild) as? Expression
+            ?: throw Exception("Expression expected, row: ${tChild.line}, column: ${tChild.column}")
+        val ifFalse = parseNode(fChild) as? Expression
+            ?: throw Exception("Expression expected, row: ${fChild.line}, column: ${fChild.column}")
 
         val type = TypeChecker.operatorType(ifTrue.dataType, ifFalse.dataType)
 
         TypeChecker.isValidCondition(cond)
 
-        return TernaryOperator(current, type, NodeType.Expression, cond, ifTrue, ifFalse)
+        return TernaryOperator(current, type, NodeType.Expression, cond,
+            ifTrue, ifFalse, node.line, node.column)
     }
 
     private fun literal(node: SimpleNode): Literal {
@@ -62,14 +77,16 @@ class AstBuilder {
             is ASTBoolLiteral -> DataType.Bool
             else -> DataType.Float
         }
-        return Literal(current, type, value)
+        return Literal(current, type, value, node.line, node.column)
     }
 
     private fun identifier(node: SimpleNode): Identifier {
         val id = node.jjtGetValue() as String
-        val type = current.getVarType(id) ?: throw Exception("Unresolved identifier '$id'")
 
-        return Identifier(current, type, id)
+        val type = current.getVarType(id) ?:
+            throw Exception("Unresolved identifier '$id' on line ${node.line}, column ${node.column}")
+
+        return Identifier(current, type, id, node.line, node.column)
     }
 
     private fun unaryOperator(node: SimpleNode): UnaryOperator {
@@ -82,10 +99,11 @@ class AstBuilder {
                 DataType.Bool
             }
             TypeChecker.isNumeric(value.dataType) -> value.dataType
-            else -> throw Exception("Operator- argument has invalid type (${value.dataType})")
+            else -> throw Exception(
+                "Operator$op argument has invalid type (${value.dataType}), row: ${value.row}, column: ${value.column}")
         }
 
-        return UnaryOperator(current, type, NodeType.Expression, op, value)
+        return UnaryOperator(current, type, NodeType.Expression, op, value, node.line, node.column)
     }
 
     private fun variable(node: SimpleNode): Var {
@@ -94,7 +112,7 @@ class AstBuilder {
         val variables = (0 until node.jjtGetNumChildren()).map {
             (node.jjtGetChild(it) as SimpleNode).jjtGetValue() as String
         }.map {
-            Var(current, it, type)
+            Var(current, it, type, node.line, node.column)
         }
 
         /* Little bit of a hack */
@@ -115,14 +133,14 @@ class AstBuilder {
         val exprs = (0 until node.jjtGetNumChildren()).map {
             parseNode(node.jjtGetChild(it))
         }
-        return Write(current, exprs)
+        return Write(current, exprs, node.line, node.column)
     }
 
     private fun read(node: SimpleNode): Read {
         val ids = (0 until node.jjtGetNumChildren()).map {
             parseNode(node.jjtGetChild(it)) as Identifier
         }
-        return Read(current, ids)
+        return Read(current, ids, node.line, node.column)
     }
 
     private fun forLoop(node: SimpleNode): For {
@@ -137,10 +155,10 @@ class AstBuilder {
         }
 
         if (cond.dataType != DataType.Bool) {
-            throw Exception("Loop condition must be of type 'bool'.")
+            throw Exception("Loop condition must be of type 'bool', row: ${cond.row}, column: ${cond.column}")
         }
 
-        return For(current, init, cond, increment, body)
+        return For(current, init, cond, increment, body, node.line, node.column)
     }
 
     private fun ifStatement(node: SimpleNode): If {
@@ -156,11 +174,11 @@ class AstBuilder {
             null
         }
 
-        return If(current, cond, onTrue, onFalse)
+        return If(current, cond, onTrue, onFalse, node.line, node.column)
     }
 
     private fun block(node: SimpleNode): Block {
-        val b = Block(current)
+        val b = Block(current, node.line, node.column)
         enterScope(b)
         (0 until node.jjtGetNumChildren()).forEach {
             b.addNode(parseNode(node.jjtGetChild(it)))

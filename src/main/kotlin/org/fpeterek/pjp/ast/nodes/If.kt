@@ -3,8 +3,9 @@ package org.fpeterek.pjp.ast.nodes
 import org.fpeterek.pjp.ast.DataType
 import org.fpeterek.pjp.ast.NodeType
 
-class If(parent: Block, val cond: Expression, val onTrue: AstNode?, val onFalse: AstNode?)
-    : AstNode(NodeType.If, DataType.Unit, parent) {
+class If(parent: Block, val cond: Expression, val onTrue: AstNode?, val onFalse: AstNode?,
+         row: Int, col: Int)
+    : AstNode(NodeType.If, DataType.Unit, parent, row, col) {
 
     private val header: String
         get() = "if ($cond)"

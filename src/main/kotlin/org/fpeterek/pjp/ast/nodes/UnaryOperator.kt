@@ -4,8 +4,9 @@ import org.fpeterek.pjp.ast.DataType
 import org.fpeterek.pjp.ast.NodeType
 
 class UnaryOperator(parent: Block, type: DataType, nodeType: NodeType,
-                    val operator: String, val expr: Expression)
-    : Expression(parent, type, nodeType) {
+                    val operator: String, val expr: Expression,
+                    row: Int, col: Int)
+    : Expression(parent, type, nodeType, row, col) {
 
     override fun toString() = "$operator($expr)"
 

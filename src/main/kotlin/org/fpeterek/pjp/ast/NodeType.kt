@@ -9,5 +9,6 @@ enum class NodeType {
     Expression,
     If,
     For,
+    Error,
     Block
 }

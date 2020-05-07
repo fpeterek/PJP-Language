@@ -7,6 +7,7 @@ enum class DataType(val value: kotlin.String) {
     Float("float"),
     Bool("boolean"),
     String("String"),
+    TypeError("TypeError"),
     Unit("Unit");
 
     companion object {

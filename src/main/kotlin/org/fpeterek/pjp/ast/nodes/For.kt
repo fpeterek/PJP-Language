@@ -4,8 +4,8 @@ import org.fpeterek.pjp.ast.DataType
 import org.fpeterek.pjp.ast.NodeType
 
 class For(parent: Block, val init: Expression, val cond: Expression, val increment: Expression,
-          val body: AstNode?)
-    : AstNode(NodeType.For, DataType.Unit, parent) {
+          val body: AstNode?, row: Int, col: Int)
+    : AstNode(NodeType.For, DataType.Unit, parent, row, col) {
 
     private val header: String
         get() = "for ($init; $cond; $increment)"

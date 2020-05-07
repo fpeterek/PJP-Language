@@ -4,7 +4,8 @@ import org.fpeterek.pjp.ast.DataType
 import org.fpeterek.pjp.ast.NodeType
 import java.lang.Exception
 
-class Block(parent: Block?) : AstNode(NodeType.Block, DataType.Unit, parent) {
+class Block(parent: Block?, row: Int, col: Int)
+    : AstNode(NodeType.Block, DataType.Unit, parent, row, col) {
 
     private val subnodes = mutableListOf<AstNode>()
     private val scopeVariables = mutableMapOf<String, DataType>()
