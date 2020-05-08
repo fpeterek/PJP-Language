@@ -9,8 +9,8 @@ public class Parser/*@bgen(jjtree)*/implements ParserTreeConstants, ParserConsta
   }
 
   void jjtreeOpenNodeScope(Node n) {
-    ((SimpleNode)n).line = getToken(1).beginLine;
-    ((SimpleNode)n).column = getToken(1).beginColumn;
+    ((SimpleNode)n).line = getToken(0).beginLine;
+    ((SimpleNode)n).column = getToken(0).beginColumn;
   }
   void jjtreeCloseNodeScope(Node n) { }
 
@@ -951,26 +951,26 @@ if (jjtc001) {
     }
 }
 
-  final public void Identifier() throws ParseException {/*@bgen(jjtree) Identifier */
-  ASTIdentifier jjtn000 = new ASTIdentifier(JJTIDENTIFIER);
-  boolean jjtc000 = true;
-  jjtree.openNodeScope(jjtn000);
-  jjtreeOpenNodeScope(jjtn000);Token t;
+  final public void Identifier() throws ParseException {Token t;
+    t = jj_consume_token(IDENTIFIER);
+ASTIdentifier jjtn001 = new ASTIdentifier(JJTIDENTIFIER);
+                     boolean jjtc001 = true;
+                     jjtree.openNodeScope(jjtn001);
+                     jjtreeOpenNodeScope(jjtn001);
     try {
-      t = jj_consume_token(IDENTIFIER);
-jjtree.closeNodeScope(jjtn000, true);
-                     jjtc000 = false;
+jjtree.closeNodeScope(jjtn001, true);
+                     jjtc001 = false;
                      if (jjtree.nodeCreated()) {
-                      jjtreeCloseNodeScope(jjtn000);
+                      jjtreeCloseNodeScope(jjtn001);
                      }
-jjtn000.value = t.image;
+jjtn001.value = t.image;
     } finally {
-if (jjtc000) {
-        jjtree.closeNodeScope(jjtn000, true);
-        if (jjtree.nodeCreated()) {
-         jjtreeCloseNodeScope(jjtn000);
-        }
-      }
+if (jjtc001) {
+                       jjtree.closeNodeScope(jjtn001, true);
+                       if (jjtree.nodeCreated()) {
+                        jjtreeCloseNodeScope(jjtn001);
+                       }
+                     }
     }
 }
 

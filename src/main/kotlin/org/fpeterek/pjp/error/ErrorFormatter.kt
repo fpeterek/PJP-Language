@@ -42,12 +42,20 @@ object ErrorFormatter {
     private fun trimLine(line: String, col: Int): Pair<String, Int> {
 
         val adjustedCol = col-1
-        val errIndex = if (adjustedCol < halfLen) adjustedCol else adjustedCol - halfLen
 
-        val begin = max(0, errIndex - halfLen)
-        val end = begin + min(line.length, maxLen)
+        val begin = max(adjustedCol - halfLen, 0)
+        val end = min(adjustedCol + halfLen, line.length)
 
-        return line.substring(begin, end) to errIndex
+        val adjustedBegin = if (end == line.length) max(end - maxLen, 0) else begin
+        val adjustedEnd = if (begin == 0) min(maxLen, line.length) else end
+
+        val prefix = if (adjustedBegin > 0 ) "..." else ""
+        val suffix = if (adjustedEnd < line.length) "..." else ""
+        val trimmed = "$prefix${line.substring(adjustedBegin, adjustedEnd)}$suffix"
+
+        val errIndex = adjustedCol - begin - (adjustedBegin - begin) + prefix.length
+
+        return trimmed to errIndex
     }
 
     private fun formatPtr(ptrIndex: Int): String {
@@ -61,7 +69,6 @@ object ErrorFormatter {
     private fun formatError(error: CompilerError, errorLines: Map<Int, String>): Pair<String, String> {
 
         val (trimmed, idx) = trimLine(errorLines[error.row] ?: "", error.col)
-
         return trimmed to formatPtr(idx)
     }
 

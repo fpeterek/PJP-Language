@@ -24,7 +24,7 @@ fun compileFile(filename: String) {
             println(ast.toString(0))
         }
     } catch (e: Exception) {
-        println(e.message)
+        println(e)
     }
 
 

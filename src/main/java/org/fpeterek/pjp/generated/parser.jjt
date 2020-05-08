@@ -18,8 +18,8 @@ public class Parser {
   }
 
   void jjtreeOpenNodeScope(Node n) {
-    ((SimpleNode)n).line = getToken(1).beginLine;
-    ((SimpleNode)n).column = getToken(1).beginColumn;
+    ((SimpleNode)n).line = getToken(0).beginLine;
+    ((SimpleNode)n).column = getToken(0).beginColumn;
   }
   void jjtreeCloseNodeScope(Node n) { }
 
@@ -327,12 +327,12 @@ void Value() :
 | BracedExpression()
 }
 
-void Identifier() #Identifier :
+void Identifier() :
 {
   Token t;
 }
 {
-    t=<IDENTIFIER> {jjtThis.value = t.image;}
+    t=<IDENTIFIER> {jjtThis.value = t.image;} #Identifier
 }
 
 void Literal()  :

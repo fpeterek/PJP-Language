@@ -3,8 +3,8 @@ package org.fpeterek.pjp.ast
 import org.fpeterek.pjp.error.ErrorReporter
 import org.fpeterek.pjp.TypeChecker
 import org.fpeterek.pjp.ast.nodes.*
+import org.fpeterek.pjp.error.TypeErrorException
 import org.fpeterek.pjp.generated.*
-import kotlin.Exception
 
 class AstBuilder {
 
@@ -37,8 +37,9 @@ class AstBuilder {
 
         val type = try {
             TypeChecker.binaryOp(left.dataType, right.dataType, op)
-        } catch (e: Exception) {
-            error(e.message ?: "", node.line, node.column)
+        } catch (e: TypeErrorException) {
+            val cause = e.causingExpr.getCause(left, right)
+            error(e.message ?: "", cause.row, cause.column)
             TypeChecker.attemptBinaryRecovery(left.dataType, right.dataType, op)
         }
 
@@ -61,14 +62,15 @@ class AstBuilder {
 
         val type = try {
             TypeChecker.ternaryType(ifTrue.dataType, ifFalse.dataType)
-        } catch (e: Exception) {
-            error(e.message ?: "", cChild.line, cChild.column)
+        } catch (e: TypeErrorException) {
+            val cause = e.causingExpr.getCause(ifTrue, ifFalse)
+            error(e.message ?: "", cause.row, cause.column)
             TypeChecker.attemptTernaryRecovery(ifTrue.dataType, ifFalse.dataType)
         }
 
         try {
             TypeChecker.isValidCondition(cond)
-        } catch (e: Exception) {
+        } catch (e: TypeErrorException) {
             error(e.message ?: "", cChild.line, cChild.column)
         }
 
@@ -105,8 +107,8 @@ class AstBuilder {
 
         val type = try {
             TypeChecker.unaryOp(value.dataType, op)
-        } catch (e: Exception) {
-            error(e.message ?: "", node.column, node.line)
+        } catch (e: TypeErrorException) {
+            error(e.message ?: "", value.row, value.column)
             TypeChecker.attemptUnaryRecovery(op)
         }
 
