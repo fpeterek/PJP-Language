@@ -1,0 +1,21 @@
+var a: int;
+var b: float;
+
+a + b;
+
+write a, b;
+
+"Test" . 1234;
+
+"Test" . "TEST" . "TESTTEST" . a;
+
+var c: String;
+
+c = a;
+
+if (a == "b") {
+    true && (true || false || (true && 1)) && 0;
+}
+
+25 % (7 / 3.5);
+
