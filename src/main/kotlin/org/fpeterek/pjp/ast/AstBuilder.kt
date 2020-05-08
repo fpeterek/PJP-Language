@@ -4,7 +4,7 @@ import org.fpeterek.pjp.ErrorReporter
 import org.fpeterek.pjp.TypeChecker
 import org.fpeterek.pjp.ast.nodes.*
 import org.fpeterek.pjp.generated.*
-import java.lang.Exception
+import kotlin.Exception
 
 class AstBuilder {
 
@@ -18,13 +18,6 @@ class AstBuilder {
     private fun leaveScope() {
         current = current.parent ?: root
     }
-
-    private fun operatorTypeCheck(node: SimpleNode) =
-        when (node) {
-            is ASTAssignment -> TypeChecker::assignmentType
-            is ASTCmp -> TypeChecker::comparisonType
-            else -> TypeChecker::operatorType
-        }
 
     private fun error(msg: String, row: Int, col: Int): Error {
         ErrorReporter.report("$msg (row: $row, column: $col)")
@@ -42,10 +35,15 @@ class AstBuilder {
             ?: error("Expression expected", lChild.line, lChild.column)
         val op = node.jjtGetValue() as String
 
-        val typeCheck = operatorTypeCheck(node)
+        val type = try {
+            TypeChecker.binaryOp(left.dataType, right.dataType, op)
+        } catch (e: Exception) {
+            error(e.message ?: "", node.line, node.column)
+            TypeChecker.attemptBinaryRecovery(left.dataType, right.dataType, op)
+        }
 
-        return BinaryOperator(current, typeCheck(left.dataType, right.dataType),
-            NodeType.Expression, op, left, right, node.line, node.column)
+        return BinaryOperator(current, type, NodeType.Expression, op, left, right,
+            node.line, node.column)
     }
 
     private fun ternaryOperator(node: SimpleNode): TernaryOperator {
@@ -55,15 +53,24 @@ class AstBuilder {
         val fChild = node.jjtGetChild(2) as SimpleNode
 
         val cond = parseNode(cChild) as? Expression
-            ?: throw Exception("Expression expected, row: ${cChild.line}, column: ${cChild.column}")
+            ?: error("Expression expected", cChild.line, cChild.column)
         val ifTrue = parseNode(tChild) as? Expression
-            ?: throw Exception("Expression expected, row: ${tChild.line}, column: ${tChild.column}")
+            ?: error("Expression expected", cChild.line, cChild.column)
         val ifFalse = parseNode(fChild) as? Expression
-            ?: throw Exception("Expression expected, row: ${fChild.line}, column: ${fChild.column}")
+            ?: error("Expression expected", cChild.line, cChild.column)
 
-        val type = TypeChecker.operatorType(ifTrue.dataType, ifFalse.dataType)
+        val type = try {
+            TypeChecker.ternaryType(ifTrue.dataType, ifFalse.dataType)
+        } catch (e: Exception) {
+            error(e.message ?: "", cChild.line, cChild.column)
+            TypeChecker.attemptTernaryRecovery(ifTrue.dataType, ifFalse.dataType)
+        }
 
-        TypeChecker.isValidCondition(cond)
+        try {
+            TypeChecker.isValidCondition(cond)
+        } catch (e: Exception) {
+            error(e.message ?: "", cChild.line, cChild.column)
+        }
 
         return TernaryOperator(current, type, NodeType.Expression, cond,
             ifTrue, ifFalse, node.line, node.column)
@@ -81,10 +88,13 @@ class AstBuilder {
     }
 
     private fun identifier(node: SimpleNode): Identifier {
-        val id = node.jjtGetValue() as String
 
-        val type = current.getVarType(id) ?:
-            throw Exception("Unresolved identifier '$id' on line ${node.line}, column ${node.column}")
+        val id = node.jjtGetValue() as String
+        val type = current.getVarType(id) ?: DataType.TypeError
+
+        if (type == DataType.TypeError) {
+            error("Unresolved identifier '$id'", node.line, node.column)
+        }
 
         return Identifier(current, type, id, node.line, node.column)
     }
@@ -93,14 +103,11 @@ class AstBuilder {
         val value = parseNode(node.jjtGetChild(0)) as Expression
         val op = node.jjtGetValue() as String
 
-        val type = when {
-            op == "!" -> {
-                TypeChecker.isValidCondition(value)
-                DataType.Bool
-            }
-            TypeChecker.isNumeric(value.dataType) -> value.dataType
-            else -> throw Exception(
-                "Operator$op argument has invalid type (${value.dataType}), row: ${value.row}, column: ${value.column}")
+        val type = try {
+            TypeChecker.unaryOp(value.dataType, op)
+        } catch (e: Exception) {
+            error(e.message ?: "", node.column, node.line)
+            TypeChecker.attemptUnaryRecovery(op)
         }
 
         return UnaryOperator(current, type, NodeType.Expression, op, value, node.line, node.column)
@@ -155,7 +162,7 @@ class AstBuilder {
         }
 
         if (cond.dataType != DataType.Bool) {
-            throw Exception("Loop condition must be of type 'bool', row: ${cond.row}, column: ${cond.column}")
+            error("Loop condition must be of type 'bool'", cond.row, cond.column)
         }
 
         return For(current, init, cond, increment, body, node.line, node.column)
@@ -172,6 +179,10 @@ class AstBuilder {
             parseNode(node.jjtGetChild(2))
         } else {
             null
+        }
+
+        if (cond.dataType != DataType.Bool) {
+            error("If condition must be of type 'bool'", cond.row, cond.column)
         }
 
         return If(current, cond, onTrue, onFalse, node.line, node.column)

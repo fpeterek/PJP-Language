@@ -15,8 +15,13 @@ fun main() {
         val builder = AstBuilder()
         val ast = builder.build(tree)
 
-        println("Printing AST...")
+        if (ErrorReporter.errorsDetected) {
+            ErrorReporter.errors.forEach {
+                println(it)
+            }
+        }
 
+        println("Printing AST...")
         println(ast.toString(0))
 
     } catch (e: Exception) {

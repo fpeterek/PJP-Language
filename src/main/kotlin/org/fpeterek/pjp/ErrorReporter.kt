@@ -2,16 +2,19 @@ package org.fpeterek.pjp
 
 object ErrorReporter {
 
-    private val errors = mutableListOf<String>()
+    private val errorList = mutableListOf<String>()
+
+    val errors: List<String>
+        get() = errorList
 
     val errorsDetected: Boolean
-        get() = errors.isNotEmpty()
+        get() = errorList.isNotEmpty()
 
     val errorCount: Int
-        get() = errors.size
+        get() = errorList.size
 
-    fun reset() = errors.clear()
+    fun reset() = errorList.clear()
 
-    fun report(msg: String) = errors.add(msg)
+    fun report(msg: String) = errorList.add(msg)
 
 }
