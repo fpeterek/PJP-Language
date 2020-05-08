@@ -1,6 +1,6 @@
 package org.fpeterek.pjp.ast
 
-import org.fpeterek.pjp.ErrorReporter
+import org.fpeterek.pjp.error.ErrorReporter
 import org.fpeterek.pjp.TypeChecker
 import org.fpeterek.pjp.ast.nodes.*
 import org.fpeterek.pjp.generated.*
@@ -20,7 +20,7 @@ class AstBuilder {
     }
 
     private fun error(msg: String, row: Int, col: Int): Error {
-        ErrorReporter.report("$msg (row: $row, column: $col)")
+        ErrorReporter.report(msg, row, col)
         return Error(current, row, col)
     }
 

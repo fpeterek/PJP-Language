@@ -2,6 +2,7 @@ package org.fpeterek.pjp
 
 import org.fpeterek.pjp.ast.DataType
 import org.fpeterek.pjp.ast.nodes.Expression
+import org.fpeterek.pjp.error.TypeErrorException
 
 object TypeChecker {
 

@@ -1,3 +1,3 @@
-package org.fpeterek.pjp
+package org.fpeterek.pjp.error
 
 class TypeErrorException(msg: String) : Exception(msg)

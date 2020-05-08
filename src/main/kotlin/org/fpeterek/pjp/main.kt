@@ -1,31 +1,42 @@
 package org.fpeterek.pjp
 
 import org.fpeterek.pjp.ast.AstBuilder
+import org.fpeterek.pjp.error.ErrorFormatter
+import org.fpeterek.pjp.error.ErrorReporter
 import org.fpeterek.pjp.generated.Parser
+import java.io.FileInputStream
 import kotlin.Exception
+import kotlin.system.exitProcess
 
-fun main() {
-
-    println("Input:")
+fun compileFile(filename: String) {
 
     try {
 
-        val parser = Parser(System.`in`)
+        val parser = Parser(FileInputStream(filename))
         val tree = parser.Start()
         val builder = AstBuilder()
         val ast = builder.build(tree)
 
         if (ErrorReporter.errorsDetected) {
-            ErrorReporter.errors.forEach {
-                println(it)
-            }
+            ErrorFormatter.reportErrors(filename)
+        } else {
+            println("Printing AST...")
+            println(ast.toString(0))
         }
-
-        println("Printing AST...")
-        println(ast.toString(0))
-
     } catch (e: Exception) {
         println(e.message)
     }
+
+
+}
+
+fun main(args: Array<String>) {
+
+    if (args.isEmpty()) {
+        println("Error: No input files supplied")
+        exitProcess(1)
+    }
+
+    args.forEach { compileFile(it) }
 
 }
