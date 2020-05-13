@@ -140,7 +140,7 @@ class AstBuilder {
 
     private fun write(node: SimpleNode): Write {
         val exprs = (0 until node.jjtGetNumChildren()).map {
-            parseNode(node.jjtGetChild(it))
+            parseNode(node.jjtGetChild(it)) as Expression
         }
         return Write(current, exprs, node.line, node.column)
     }

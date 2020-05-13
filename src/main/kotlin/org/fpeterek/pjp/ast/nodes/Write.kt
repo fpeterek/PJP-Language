@@ -3,7 +3,7 @@ package org.fpeterek.pjp.ast.nodes
 import org.fpeterek.pjp.ast.DataType
 import org.fpeterek.pjp.ast.NodeType
 
-class Write(parent: Block, val args: List<AstNode>, row: Int, col: Int)
+class Write(parent: Block, val args: List<Expression>, row: Int, col: Int)
     : AstNode(NodeType.Write, DataType.Unit, parent, row, col) {
 
     init {
