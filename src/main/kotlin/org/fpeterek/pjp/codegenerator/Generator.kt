@@ -39,13 +39,45 @@ class Generator {
     private fun getWriter(filename: String) = File(filename).printWriter()
 
     private val bytecode = mutableListOf<String>()
-
-
+    
     private fun ternary(operator: TernaryOperator) = listOf<String>()
 
-    private fun binary(operator: BinaryOperator) = listOf<String>()
+    private fun assign(operator: BinaryOperator): List<String> =
+        expression(operator.right) + listOf(isave((operator.left as Identifier).name))
 
-    private fun unary(operator: UnaryOperator) = listOf<String>()
+    private fun binaryExpr(operator: BinaryOperator): List<String> =
+        expression(operator.right) + expression(operator.left) +
+            when (operator.operator) {
+                "==" -> listOf(ieq)
+                "<"  -> listOf(ilt)
+                ">"  -> listOf(igt)
+                "<=" -> listOf(igt, inot)
+                ">=" -> listOf(ilt, inot)
+                "!=" -> listOf(ieq, inot)
+                "||" -> listOf(ior)
+                "&&" -> listOf(iand)
+                "+"  -> listOf(iadd)
+                "-"  -> listOf(isub)
+                "."  -> listOf(icat)
+                "*"  -> listOf(imul)
+                "/"  -> listOf(idiv)
+                "%"  -> listOf(imod)
+                else -> throw Exception("Invalid operator")
+            }
+
+    private fun binary(operator: BinaryOperator) = if (operator.operator == "=") {
+        assign(operator)
+    } else {
+        binaryExpr(operator)
+    }
+
+    private fun unary(operator: UnaryOperator): List<String> =
+        expression(operator.expr) +
+            when (operator.operator) {
+                "-" -> listOf(ineg)
+                "!"  -> listOf(inot)
+                else -> throw Exception("Invalid operator")
+            }
 
     private fun varAccess(variable: Identifier) = listOf(iload(variable))
     private fun literal(value: Literal) = listOf(ipush(value))
