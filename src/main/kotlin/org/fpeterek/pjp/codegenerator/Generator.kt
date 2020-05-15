@@ -35,10 +35,9 @@ class Generator {
     private val ilt  = "lt"
     private val ieq  = "eq"
     private val inot = "not"
+    private val ipop = "pop" // Ignore value on stack
 
     private fun getWriter(filename: String) = File(filename).printWriter()
-
-    private val bytecode = mutableListOf<String>()
     
     private fun ternary(operator: TernaryOperator) = listOf<String>()
 
@@ -91,6 +90,8 @@ class Generator {
         else -> throw Exception("Not an expression")
     }
 
+    private fun topLevelExpression(e: Expression) = expression(e) + listOf(ipop)
+
     private fun write(node: Write) = node.args.reversed().flatMap {
         expression(it)
     } + listOf(iprint(node.args.size))
@@ -100,6 +101,69 @@ class Generator {
             iread(it.dataType),
             isave(it.name)
         )
+    }
+
+    private fun ifStatement(statement: If): List<String> {
+
+        val onTrue = if (statement.onTrue != null) {
+            compile(statement.onTrue)
+        } else {
+            listOf()
+        }.toMutableList()
+
+        val onFalse = if (statement.onFalse != null) {
+            compile(statement.onFalse)
+        } else {
+            listOf()
+        }
+
+        if (onFalse.isNotEmpty()) {
+            onTrue.add(ijump(onFalse.size))
+        }
+
+        val bytecode = expression(statement.cond).toMutableList()
+
+        if (onTrue.isNotEmpty()) {
+            bytecode.add(ifjump(onTrue.size))
+        }
+
+        bytecode.addAll(onTrue)
+        bytecode.addAll(onFalse)
+
+        return bytecode
+    }
+
+    private fun forStatement(statement: For): List<String> {
+
+        val bytecode = topLevelExpression(statement.init).toMutableList()
+
+        val body = if (statement.body != null) {
+            compile(statement.body)
+        } else {
+            listOf()
+        }.toMutableList()
+
+        body.addAll(topLevelExpression(statement.increment))
+        body.add(ijump(body.size * -1))
+
+        bytecode.addAll(expression(statement.cond))
+        bytecode.add(ifjump(body.size))
+        bytecode.addAll(body)
+
+        return body
+    }
+
+    private fun block(b: Block): List<String> = b.nodes.flatMap { compile(it) }
+
+    private fun compile(node: AstNode) = when (node) {
+        is Write -> write(node)
+        is Read -> read(node)
+        is Expression -> topLevelExpression(node)
+        is If -> ifStatement(node)
+        is For -> forStatement(node)
+        is Var -> listOf() // Ignore variable definitions
+        is Block -> block(node)
+        else -> throw Exception("Invalid AST Node")
     }
 
 
