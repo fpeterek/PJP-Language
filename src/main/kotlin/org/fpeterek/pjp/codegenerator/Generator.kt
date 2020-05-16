@@ -3,7 +3,7 @@ package org.fpeterek.pjp.codegenerator
 import org.fpeterek.pjp.ast.DataType
 import org.fpeterek.pjp.ast.nodes.*
 import java.io.File
-import java.lang.Exception
+import kotlin.Exception
 
 object Generator {
 
@@ -45,14 +45,18 @@ object Generator {
         val onTrue = expression(operator.onTrue).toMutableList()
         val onFalse = expression(operator.onFalse).toMutableList()
 
-        cond.add(ifjump(onTrue.size))
+        cond.add(ifjump(onTrue.size + 1))
         onTrue.add(ijump(onFalse.size))
 
         return cond + onTrue + onFalse
     }
 
     private fun assign(operator: BinaryOperator): List<String> =
-        expression(operator.right) + listOf(isave((operator.left as Identifier).name))
+        expression(operator.right) + listOf(
+            isave((operator.left as Identifier).name), // Store the value
+            iload(operator.left) // Then load it again because = returns a value
+        )
+
 
     private fun binaryExpr(operator: BinaryOperator): List<String> =
         expression(operator.right) + expression(operator.left) +
@@ -134,7 +138,7 @@ object Generator {
         val bytecode = expression(statement.cond).toMutableList()
 
         if (onTrue.isNotEmpty()) {
-            bytecode.add(ifjump(onTrue.size))
+            bytecode.add(ifjump(onTrue.size + 1))
         }
 
         bytecode.addAll(onTrue)
@@ -153,17 +157,30 @@ object Generator {
             listOf()
         }.toMutableList()
 
-        body.addAll(topLevelExpression(statement.increment))
-        body.add(ijump(body.size * -1))
+        val cond = expression(statement.cond)
 
-        bytecode.addAll(expression(statement.cond))
-        bytecode.add(ifjump(body.size))
+        body.addAll(topLevelExpression(statement.increment))
+        body.add(ijump((cond.size + body.size + 2) * -1))
+
+        bytecode.addAll(cond)
+        bytecode.add(ifjump(body.size + 1))
         bytecode.addAll(body)
 
-        return body
+        return bytecode
     }
 
     private fun block(b: Block): List<String> = b.nodes.flatMap { compile(it) }
+
+    private fun initVar(variable: Var) = listOf(
+        when (variable.dataType){
+            DataType.Int -> "push I0"
+            DataType.Bool -> "push Bfalse"
+            DataType.Float -> "push F0.0"
+            DataType.String -> "push S"
+            else -> throw Exception("Invalid variable type")
+        },
+        isave(variable.name)
+    )
 
     private fun compile(node: AstNode) = when (node) {
         is Write -> write(node)
@@ -171,7 +188,7 @@ object Generator {
         is Expression -> topLevelExpression(node)
         is If -> ifStatement(node)
         is For -> forStatement(node)
-        is Var -> listOf() // Ignore variable definitions
+        is Var -> initVar(node)
         is Block -> block(node)
         else -> throw Exception("Invalid AST Node")
     }
