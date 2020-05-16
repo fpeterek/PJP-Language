@@ -5,7 +5,7 @@ import org.fpeterek.pjp.ast.nodes.*
 import java.io.File
 import java.lang.Exception
 
-class Generator {
+object Generator {
 
     private val typeMapping = mapOf(
         "boolean" to "B",
@@ -22,24 +22,34 @@ class Generator {
     private fun iprint(count: Int) = "print $count"
     private fun iread(type: DataType) = "read ${typeMapping[type.value]}"
 
-    private val iadd = "add"
-    private val isub = "sub"
-    private val imul = "mul"
-    private val idiv = "div"
-    private val imod = "mod"
-    private val ineg = "uminus"
-    private val icat = "concat"
-    private val iand = "and"
-    private val ior  = "or"
-    private val igt  = "gt"
-    private val ilt  = "lt"
-    private val ieq  = "eq"
-    private val inot = "not"
-    private val ipop = "pop" // Ignore value on stack
+    private const val iadd = "add"
+    private const val isub = "sub"
+    private const val imul = "mul"
+    private const val idiv = "div"
+    private const val imod = "mod"
+    private const val ineg = "uminus"
+    private const val icat = "concat"
+    private const val iand = "and"
+    private const val ior  = "or"
+    private const val igt  = "gt"
+    private const val ilt  = "lt"
+    private const val ieq  = "eq"
+    private const val inot = "not"
+    private const val ipop = "pop" // Ignore value on stack
 
     private fun getWriter(filename: String) = File(filename).printWriter()
     
-    private fun ternary(operator: TernaryOperator) = listOf<String>()
+    private fun ternary(operator: TernaryOperator): List<String> {
+
+        val cond = expression(operator.cond).toMutableList()
+        val onTrue = expression(operator.onTrue).toMutableList()
+        val onFalse = expression(operator.onFalse).toMutableList()
+
+        cond.add(ifjump(onTrue.size))
+        onTrue.add(ijump(onFalse.size))
+
+        return cond + onTrue + onFalse
+    }
 
     private fun assign(operator: BinaryOperator): List<String> =
         expression(operator.right) + listOf(isave((operator.left as Identifier).name))
@@ -169,9 +179,13 @@ class Generator {
 
     fun generate(ast: Block, filename: String) {
 
+        val bytecode = compile(ast)
+        val writer = getWriter(filename)
 
-
-
+        bytecode.forEach {
+            writer.println(it)
+        }
+        writer.flush()
     }
 
 }
