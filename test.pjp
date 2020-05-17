@@ -1,0 +1,36 @@
+if (3<4) write "Podminka funguje";
+else {
+ write "Podminka nefunguje";
+}
+
+if (4<3) {
+    write "Podminka nefunguje";
+} else {
+    write "Podminka funguje";
+}
+
+write "Skoky v if/else funguji spravne";
+
+var a : int;
+
+for(a=0; a<10; a=a+1) {
+ write "a=",a;
+}
+
+write (1<3) ? "Ternarni operator funguje" : "Ternarni operator nefunguje";
+
+write (1>=3) ? "Ternarni operator nefunguje" : "Ternarni operator funguje";
+
+var b: boolean;
+
+b = false;
+
+write "!b=", !b;
+
+write "-a=", -a;
+
+var f: float;
+write "Vstup (desetinne cislo):";
+read f;
+write "Precteny vstup: ", f;
+

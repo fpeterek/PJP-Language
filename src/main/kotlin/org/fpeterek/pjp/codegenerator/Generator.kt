@@ -138,7 +138,7 @@ object Generator {
         val bytecode = expression(statement.cond).toMutableList()
 
         if (onTrue.isNotEmpty()) {
-            bytecode.add(ifjump(onTrue.size + 1))
+            bytecode.add(ifjump(onTrue.size))
         }
 
         bytecode.addAll(onTrue)
