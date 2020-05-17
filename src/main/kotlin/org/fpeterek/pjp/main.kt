@@ -12,8 +12,8 @@ import kotlin.system.exitProcess
 fun dotIndex(filename: String) = filename.indexOf('.')
 
 fun outputFileName(filename: String, dotIndex: Int) = when (dotIndex) {
-        -1 -> "$filename.pjp"
-        else -> "${filename.dropLastWhile { it != '.' }}pjp"
+        -1 -> "$filename.pjpc"
+        else -> "${filename.dropLastWhile { it != '.' }}pjpc"
     }
 
 fun outputFileName(filename: String) = outputFileName(filename, dotIndex(filename))

@@ -138,19 +138,22 @@ class AstBuilder {
         return variables.last()
     }
 
-    private fun write(node: SimpleNode): Write {
-        val exprs = (0 until node.jjtGetNumChildren()).map {
+    private fun write(node: SimpleNode) = Write(
+        current,
+        (0 until node.jjtGetNumChildren()).map {
             parseNode(node.jjtGetChild(it)) as Expression
-        }
-        return Write(current, exprs, node.line, node.column)
-    }
+        } + listOf(Literal(current, DataType.String, "\\n", node.column, node.line)),
+        node.line,
+        node.column
+    )
 
-    private fun read(node: SimpleNode): Read {
-        val ids = (0 until node.jjtGetNumChildren()).map {
+    private fun read(node: SimpleNode) = Read(
+        current,
+        (0 until node.jjtGetNumChildren()).map {
             parseNode(node.jjtGetChild(it)) as Identifier
-        }
-        return Read(current, ids, node.line, node.column)
-    }
+        },
+        node.line, node.column
+    )
 
     private fun forLoop(node: SimpleNode): For {
         val init = parseNode(node.jjtGetChild(0)) as Expression
