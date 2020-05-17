@@ -163,7 +163,7 @@ object Generator {
         body.add(ijump((cond.size + body.size + 2) * -1))
 
         bytecode.addAll(cond)
-        bytecode.add(ifjump(body.size + 1))
+        bytecode.add(ifjump(body.size))
         bytecode.addAll(body)
 
         return bytecode
